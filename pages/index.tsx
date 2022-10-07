@@ -3,20 +3,20 @@ import { useEffect, useRef } from 'react';
 
 import { 
   Color,
-  DirectionalLight,
   DodecahedronGeometry,
   GridHelper,
   Mesh,
+  MeshLambertMaterial,
   MeshPhongMaterial,
   PerspectiveCamera,
   PointLight,
-  RGBADepthPacking,
   Scene,
   WebGLRenderer,
 } from 'three';
 import { Planet, planets } from '../planetSpecs';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { ControlPanel } from '../components/ControlPanel';
 
 function getCamera(): PerspectiveCamera {
   const fieldOfView = 100;
@@ -30,7 +30,7 @@ function getCamera(): PerspectiveCamera {
 
   camera.lookAt(0,0,0);
   camera.position.x = 0;
-  camera.position.y = 0;
+  camera.position.y = -50;
   camera.position.z = 100;
 
   return camera;
@@ -40,13 +40,11 @@ function addHelperGrid( scene: Scene ): Array<GridHelper> {
   const [size, divisions] = [500, 50];
 
   const xGrid = new GridHelper(size, divisions, new Color(0xff0000));
-  xGrid.rotateX(90);
+  xGrid.rotation.x = Math.PI / 2;
   const yGrid = new GridHelper(size, divisions, new Color(0x00ff00));
-  yGrid.rotateY(90);
-  // const zGrid = new GridHelper(size, divisions, new Color(0x0000ff));
-  // zGrid.rotateZ(90);
+  yGrid.rotation.x = Math.PI;
 
-  scene.add(yGrid);
+  // scene.add(yGrid);
   scene.add(xGrid);
 
   return [xGrid, yGrid];
@@ -57,7 +55,7 @@ function addLightToScene( scene: Scene ): PointLight {
   const lightIntensity = 2;
   const lightSource = new PointLight(lightColor, lightIntensity);
 
-  lightSource.position.set(0, 0, 100);
+  lightSource.position.set(0, 0, 50);
   scene.add(lightSource);
 
   return lightSource;
@@ -93,17 +91,6 @@ const Home: NextPage = () => {
 
     let isGalaxyRunning = true;
 
-    document.addEventListener('wheel', (we: WheelEvent) => {
-      const verticalDelta = we.deltaY;
-      if( Math.abs(verticalDelta) > 1 ) {
-        camera.position.z += (verticalDelta / 100) * 20;
-      }
-    });
-
-    document.addEventListener('click', (ev: MouseEvent) => {
-      console.log(ev)
-    })
-
     document.addEventListener('contextmenu', (ev: MouseEvent) => {
       ev.preventDefault();
       isGalaxyRunning = !isGalaxyRunning;
@@ -111,7 +98,24 @@ const Home: NextPage = () => {
 
     const scene = new Scene();
 
-    const meshList: Array<PlanetWithMesh> = planets.map((planet ) => {
+    const sun = planets.filter( p => p.name === 'sun' )[0];
+    const planetList = planets.filter( p => p.name !== 'sun' );
+
+    {
+      const { size, color } = sun;
+      const geometry = new DodecahedronGeometry(size, 3);
+      const mat = new MeshLambertMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 1,
+      });
+
+      const mesh = new Mesh(geometry, mat);
+      mesh.position.x = 0;
+      scene.add(mesh);
+    }
+
+    const meshList: Array<PlanetWithMesh> = planetList.map((planet ) => {
       const {size, color, distance} = planet
       const geometry = new DodecahedronGeometry(size, 3);
       const object = createGeometryInstance(
@@ -132,7 +136,7 @@ const Home: NextPage = () => {
       
 
     addLightToScene(scene);
-    const [xGridHelper, yGridHelper] = addHelperGrid( scene );
+    const [xGridHelper] = addHelperGrid( scene );
 
     renderer.render(scene, camera);
 
@@ -153,7 +157,6 @@ const Home: NextPage = () => {
       }
 
       renderer.render( scene, camera );
-      xGridHelper.rotation.x = xHelperRotation;
     
       requestAnimationFrame(render)
     }
@@ -169,8 +172,13 @@ const Home: NextPage = () => {
       container.innerHTML = '';
       container.appendChild( renderer.domElement )
     }
-  })
-  let [xHelperRotation, yHelperRotation] = [90, 90];
+  });
+
+  let xHelperRotation = 90;
+  function setXHelperRotation(newRotation: number) {
+    xHelperRotation = newRotation;
+  }
+  
   return (
     <div style={{
       position: 'relative'
@@ -184,17 +192,6 @@ const Home: NextPage = () => {
           right: 0,
         }}
         ref={scenery}>
-        </div>
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 32,
-          background: 'rgba(255, 255, 255, .3)'
-        }}>
-          <button onClick={() => ++xHelperRotation}>Rotate X Grid</button>
-          {xHelperRotation}
         </div>
     </div>
   )
