@@ -16,7 +16,13 @@ import {
 import { Planet, planets } from '../planetSpecs';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { ControlPanel } from '../components/ControlPanel';
+
+function setInitialCameraPosition(camera: PerspectiveCamera): void {
+  camera.position.x = 0;
+  camera.position.y = -50;
+  camera.position.z = 100;
+  camera.lookAt(0,0,0);
+}
 
 function getCamera(): PerspectiveCamera {
   const fieldOfView = 100;
@@ -28,10 +34,7 @@ function getCamera(): PerspectiveCamera {
     fieldOfView, aspectRatio, near, far
   );
 
-  camera.lookAt(0,0,0);
-  camera.position.x = 0;
-  camera.position.y = -50;
-  camera.position.z = 100;
+  setInitialCameraPosition(camera);
 
   return camera;
 }
@@ -94,7 +97,13 @@ const Home: NextPage = () => {
     document.addEventListener('contextmenu', (ev: MouseEvent) => {
       ev.preventDefault();
       isGalaxyRunning = !isGalaxyRunning;
-    })
+    });
+
+    document.addEventListener('keypress', ( event: KeyboardEvent ) => {
+      if( event.key === 'r' ) {
+        setInitialCameraPosition(camera);
+      }
+    });
 
     const scene = new Scene();
 
@@ -174,11 +183,6 @@ const Home: NextPage = () => {
     }
   });
 
-  let xHelperRotation = 90;
-  function setXHelperRotation(newRotation: number) {
-    xHelperRotation = newRotation;
-  }
-  
   return (
     <div style={{
       position: 'relative'
