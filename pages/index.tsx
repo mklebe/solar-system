@@ -2,15 +2,22 @@ import type { NextPage } from 'next'
 import { useEffect, useRef } from 'react';
 
 import { 
+  BufferGeometry,
   Color,
   DodecahedronGeometry,
+  EllipseCurve,
   GridHelper,
+  Line,
+  LineBasicMaterial,
+  Matrix3,
+  Matrix4,
   Mesh,
   MeshLambertMaterial,
   MeshPhongMaterial,
   PerspectiveCamera,
   PointLight,
   Scene,
+  Vector3,
   WebGLRenderer,
 } from 'three';
 import { Planet, planets } from '../planetSpecs';
@@ -69,9 +76,11 @@ function createGeometryInstance(
   color: number,
   positionOnX: number,
   scene: Scene,
+  name: string,
 ): Mesh {
   const material = new MeshPhongMaterial({ color });
   const cube = new Mesh(geometry, material);
+  cube.name = name;
 
   scene.add( cube );
 
@@ -106,12 +115,30 @@ const Home: NextPage = () => {
     });
 
     const scene = new Scene();
+    window.myScene = scene;
+
+    
+    {
+      const curve = new EllipseCurve(
+        0, 0,
+        25 * 1.2, 25 * .8,
+        0, 2 * Math.PI,
+        false,
+        0
+      );
+      const points = curve.getPoints(50);
+      const geometry = new BufferGeometry().setFromPoints(points);
+      const material = new LineBasicMaterial({color: 0xff0000})
+      const ellipse = new Line(geometry, material);
+      scene.add(ellipse);
+    }
+    
 
     const sun = planets.filter( p => p.name === 'sun' )[0];
     const planetList = planets.filter( p => p.name !== 'sun' );
 
     {
-      const { size, color } = sun;
+      const { size, color, name } = sun;
       const geometry = new DodecahedronGeometry(size, 3);
       const mat = new MeshLambertMaterial({
         color,
@@ -120,18 +147,20 @@ const Home: NextPage = () => {
       });
 
       const mesh = new Mesh(geometry, mat);
+      mesh.name = name;
       mesh.position.x = 0;
       scene.add(mesh);
     }
 
     const meshList: Array<PlanetWithMesh> = planetList.map((planet ) => {
-      const {size, color, distance} = planet
+      const {size, color, distance, name} = planet
       const geometry = new DodecahedronGeometry(size, 3);
       const object = createGeometryInstance(
         geometry,
         color,
         distance,
         scene,
+        name
       )
       return {
         ...planet,
@@ -145,16 +174,19 @@ const Home: NextPage = () => {
       
 
     addLightToScene(scene);
-    const [xGridHelper] = addHelperGrid( scene );
+    addHelperGrid( scene );
 
     renderer.render(scene, camera);
 
     function setEllipsis(planet: Mesh, speed: number, averageDistance: number): void {
       const x = averageDistance * 1.2;
       const y = averageDistance * .8;
-      planet.position.setX(Math.cos(speed) * x);
-      planet.position.setY(Math.sin(speed) * y);
-      planet.position.setZ(0);
+
+      planet.position.set(
+        Math.cos(speed) * x,
+        Math.sin(speed) * y,
+        0
+      );
     }
 
     function render( ) {
@@ -166,7 +198,7 @@ const Home: NextPage = () => {
       }
 
       renderer.render( scene, camera );
-    
+
       requestAnimationFrame(render)
     }
     
