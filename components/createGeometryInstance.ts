@@ -1,7 +1,7 @@
-import { DodecahedronGeometry, Mesh, MeshPhongMaterial, Scene } from "three";
+import { Mesh, MeshPhongMaterial, Scene, ShapeGeometry } from "three";
 
 export function createGeometryInstance(
-    geometry: DodecahedronGeometry,
+    geometry: ShapeGeometry,
     color: number,
     positionOnX: number,
     scene: Scene,

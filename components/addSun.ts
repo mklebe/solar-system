@@ -1,9 +1,9 @@
-import { DodecahedronGeometry, Mesh, MeshLambertMaterial, Scene } from "three";
+import { DodecahedronGeometry, Mesh, MeshLambertMaterial, Scene, Sphere, SphereGeometry, Vector3 } from "three";
 import { Planet } from "../planetSpecs";
 
 export function addSun( sun: Planet, scene: Scene ) {
     const { size, color, name } = sun;
-    const geometry = new DodecahedronGeometry(size, 3);
+    const geometry = new SphereGeometry(size, 32);
     const mat = new MeshLambertMaterial({
         color,
         emissive: color,

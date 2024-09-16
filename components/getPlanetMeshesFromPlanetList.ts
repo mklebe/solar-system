@@ -1,4 +1,4 @@
-import { DodecahedronGeometry, Mesh, Scene } from "three";
+import { DodecahedronGeometry, Mesh, Scene, SphereGeometry } from "three";
 import { Planet } from "../planetSpecs";
 import { addOrbitToScene } from "./addOrbit";
 import { createGeometryInstance } from "./createGeometryInstance";
@@ -14,7 +14,7 @@ export function getPlanetMeshesFromPlanetList(
     return planetList.map((planet ) => {
       const {size, color, distance, name} = planet;
       addOrbitToScene(planet, scene);
-      const geometry = new DodecahedronGeometry(size, 3);
+      const geometry = new SphereGeometry(size, 32);
       const object = createGeometryInstance(
         geometry,
         color,

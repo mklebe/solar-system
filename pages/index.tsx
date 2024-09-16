@@ -1,18 +1,23 @@
 import type { NextPage } from 'next'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { 
   Mesh,
   PerspectiveCamera,
+  Raycaster,
   Scene,
+  Vector2,
   WebGLRenderer,
 } from 'three';
+
+import {Text} from 'troika-three-text'
 import { planets } from '../planetSpecs';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { addLightToScene } from '../components/addLight';
 import { addSun } from '../components/addSun';
 import { getPlanetMeshesFromPlanetList, PlanetWithMesh } from '../components/getPlanetMeshesFromPlanetList';
+import { text } from 'stream/consumers';
 
 function setInitialCameraPosition(camera: PerspectiveCamera): void {
   camera.position.x = 0;
@@ -44,6 +49,14 @@ const Home: NextPage = () => {
     let renderTicks = 0;
 
     let isGalaxyRunning = true;
+
+    const raycaster = new Raycaster();
+    const pointer = new Vector2();
+
+    const onPointerMove = (event: MouseEvent) => {
+      pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    };
 
     document.addEventListener('contextmenu', (ev: MouseEvent) => {
       ev.preventDefault();
@@ -90,12 +103,21 @@ const Home: NextPage = () => {
           setEllipsis(object, renderTicks * speedFactor, distance);
         })
       }
+      raycaster.setFromCamera( pointer, camera );
+      const intersects = raycaster.intersectObjects( planetsMeshList.map(p => p.object) );
+      planetsMeshList.forEach(p => {
+        p.object.material.color.set(p.color);
+      })
+      for ( let i = 0; i < intersects.length; i ++ ) {
+        intersects[ i ].object.material.color.set( 0xff0000 );
+      }
 
       renderer.render( scene, camera );
 
       requestAnimationFrame(render)
     }
-    
+
+    window.addEventListener( 'pointermove', onPointerMove );
     requestAnimationFrame(render);
 
 
